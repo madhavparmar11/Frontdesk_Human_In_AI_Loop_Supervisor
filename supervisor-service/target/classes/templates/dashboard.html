@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Supervisor Dashboard - Glamour Cuts</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #333; text-align: center; }
+        .section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; font-weight: bold; }
+        .pending { background-color: #fff3cd; }
+        .resolved { background-color: #d4edda; }
+        .btn { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background-color: #0056b3; }
+        .form-inline { display: flex; gap: 10px; align-items: center; }
+        input[type="text"] { padding: 8px; border: 1px solid #ddd; border-radius: 4px; flex: 1; }
+        .status-pending { color: #856404; font-weight: bold; }
+        .status-resolved { color: #155724; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏪 Glamour Cuts - Supervisor Dashboard</h1>
+        
+        <div class="section">
+            <h2>📋 Pending Help Requests</h2>
+            <div th:if="${#lists.isEmpty(pendingRequests)}">
+                <p>No pending requests at the moment.</p>
+            </div>
+            <table th:if="${!#lists.isEmpty(pendingRequests)}">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Question</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="request : ${pendingRequests}" class="pending">
+                        <td th:text="${request.id}"></td>
+                        <td th:text="${request.customerName}"></td>
+                        <td th:text="${request.question}"></td>
+                        <td th:text="${#temporals.format(request.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                        <td>
+                            <form th:action="@{/resolve/{id}(id=${request.id})}" method="post" class="form-inline">
+                                <input type="text" name="answer" placeholder="Enter your answer..." required>
+                                <button type="submit" class="btn">Resolve</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>📊 All Requests History</h2>
+            <table th:if="${!#lists.isEmpty(allRequests)}">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Question</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="request : ${allRequests}" th:class="${request.status == 'PENDING' ? 'pending' : 'resolved'}">
+                        <td th:text="${request.id}"></td>
+                        <td th:text="${request.customerName}"></td>
+                        <td th:text="${request.question}"></td>
+                        <td>
+                            <span th:text="${request.status}" 
+                                  th:class="${request.status == 'PENDING' ? 'status-pending' : 'status-resolved'}"></span>
+                        </td>
+                        <td th:text="${#temporals.format(request.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h3>💡 Quick Actions</h3>
+            <p><strong>API Endpoints:</strong></p>
+            <ul>
+                <li>Pending Requests: <code>GET /api/requests/pending</code></li>
+                <li>Request History: <code>GET /api/requests/history</code></li>
+                <li>Resolve Request: <code>POST /api/requests/{id}/resolve</code></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,9 @@
+com\glamourcuts\supervisor\controller\WebController.class
+com\glamourcuts\supervisor\controller\SupervisorController.class
+com\glamourcuts\supervisor\repository\HelpRequestRepository.class
+com\glamourcuts\supervisor\SupervisorApplication.class
+com\glamourcuts\supervisor\model\HelpRequest.class
+com\glamourcuts\supervisor\model\KnowledgeBase.class
+com\glamourcuts\supervisor\repository\KnowledgeBaseRepository.class
+com\glamourcuts\supervisor\service\SupervisorService.class
+com\glamourcuts\supervisor\dto\ResolveRequest.class

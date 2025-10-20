@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glamour Cuts - AI Receptionist</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5; 
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+        }
+        h1 { 
+            color: #333; 
+            text-align: center; 
+            margin-bottom: 30px;
+        }
+        .section { 
+            background: white; 
+            padding: 25px; 
+            margin: 20px 0; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            color: #333;
+        }
+        input[type="text"], textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus, textarea:focus { 
+            outline: none; 
+            border-color: #007bff; 
+        }
+        textarea { 
+            height: 100px; 
+            resize: vertical; 
+        }
+        .btn { 
+            padding: 12px 24px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            font-size: 16px; 
+            cursor: pointer; 
+        }
+        .btn:hover { 
+            background-color: #0056b3; 
+        }
+        .response { 
+            background-color: #d4edda; 
+            border-left: 4px solid #28a745; 
+            padding: 20px; 
+            border-radius: 4px;
+        }
+        .response h3 { 
+            margin-top: 0; 
+            color: #155724;
+        }
+        .question { 
+            font-style: italic; 
+            color: #666; 
+            margin-bottom: 10px;
+        }
+        .answer { 
+            font-size: 16px; 
+            color: #155724; 
+            line-height: 1.5;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+        }
+        th, td { 
+            padding: 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd; 
+        }
+        th { 
+            background-color: #f8f9fa; 
+            font-weight: bold; 
+        }
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .service-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+        .service-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .service-price {
+            color: #007bff;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .contact-info {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .contact-item {
+            text-align: center;
+            margin: 10px;
+        }
+        .contact-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .contact-value {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Glamour Cuts - AI Receptionist</h1>
+        
+        <div class="section">
+            <h2>Ask a Question</h2>
+            <form action="/ask" method="post">
+                <div class="form-group">
+                    <label for="customerName">Your Name:</label>
+                    <input type="text" id="customerName" name="customerName" 
+                           th:value="${customerName}" placeholder="Enter your name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="question">Your Question:</label>
+                    <textarea id="question" name="question" 
+                             placeholder="Ask about our services, prices, hours, etc." required th:text="${question}"></textarea>
+                </div>
+                
+                <button type="submit" class="btn">Ask Question</button>
+            </form>
+            
+            <div th:if="${answer}" class="response" style="margin-top: 20px;">
+                <h3>AI Response</h3>
+                <div class="question" th:text="'Q: ' + ${question}"></div>
+                <div class="answer" th:text="'A: ' + ${answer}"></div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Our Services</h2>
+            <div class="service-grid">
+                <div class="service-card">
+                    <div class="service-name">Haircut</div>
+                    <div class="service-price">$25</div>
+                </div>
+                <div class="service-card">
+                    <div class="service-name">Hair Coloring</div>
+                    <div class="service-price">$50</div>
+                </div>
+                <div class="service-card">
+                    <div class="service-name">Manicure</div>
+                    <div class="service-price">$20</div>
+                </div>
+                <div class="service-card">
+                    <div class="service-name">Pedicure</div>
+                    <div class="service-price">$30</div>
+                </div>
+            </div>
+            
+            <div class="contact-info">
+                <div class="contact-item">
+                    <div class="contact-label">Hours</div>
+                    <div class="contact-value">9am - 7pm</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-label">Contact</div>
+                    <div class="contact-value">123-456-7890</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
