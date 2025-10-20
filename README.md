@@ -1,86 +1,108 @@
-# AI Receptionist Service - Glamour Cuts
+# Human-in-the-Loop AI Supervisor
 
-A Spring Boot 3 microservice for handling customer inquiries at Glamour Cuts salon.
+**Project Type:** AI Receptionist System  
+**Tech Stack:** Java, Spring Boot 3, Thymeleaf, MongoDB (Compass), Maven
 
-## Tech Stack
-- Java 23
-- Spring Boot 3
-- Maven 3.9.9
-- MySQL
-- Spring Data JPA
-- Lombok
+## Overview
+This project implements a human-in-the-loop AI receptionist system for a salon called “Glamour Cuts”.
 
-## Setup
+The AI agent:
 
-1. **Database Setup**
-   ```sql
-   CREATE DATABASE glamour_cuts_db;
-   ```
+- Answers customer questions about services, prices, and working hours.
+- Escalates questions it cannot answer to a human supervisor.
+- Updates its internal knowledge base automatically after supervisor input.
 
-2. **Run Application**
-   ```bash
-   mvn spring-boot:run
-   ```
+The system includes:
 
-## API Endpoints
+- **Receptionist Service** – Handles AI interactions with customers.
+- **Supervisor Service** – Web dashboard for managing pending help requests.
+- **MongoDB Database (Compass)** – Stores help requests and learned answers.
+- **Thymeleaf Frontend** – Two simple interfaces:
+  - Customer interface: Ask questions and view AI responses.
+  - Supervisor dashboard: View, resolve, and track help requests.
 
-### POST /api/ask
-Ask a question to the AI receptionist.
+## Features
 
-**Request:**
-```json
-{
-  "customerName": "Alice",
-  "question": "What are your working hours?"
-}
-```
+- Modular, scalable AI agent system
+- Request lifecycle management: `PENDING → RESOLVED / UNRESOLVED`
+- Supervisor responses linked to originating requests
+- Automatic knowledge base updates
+- Simple, professional interfaces built with Thymeleaf
 
-**Response (Known Question):**
-```json
-{
-  "answer": "We are open from 9am to 7pm."
-}
-```
+## Setup Instructions
 
-**Response (Unknown Question):**
-```json
-{
-  "answer": "Let me check with my supervisor and get back to you."
-}
-```
+### 1. Clone the Repository
+```bash
+git clone https://github.com/madhavparmar/Frontdesk_Human_In_AI_Loop_Supervisor.git
+cd Frontdesk_Human_In_AI_Loop_Supervisor
+2. Configure MongoDB
+Open MongoDB Compass
 
-### GET /api/knowledge/{question}
-Get answer directly from knowledge base.
+Connect to your local MongoDB:
 
-**Example:** `GET /api/knowledge/working hours`
+Hostname: localhost
 
-## Postman Test Examples
+Port: 27017
 
-### Known Question Test
-```json
-POST http://localhost:8080/api/ask
-Content-Type: application/json
+Create a database named: human_in_ailoop_db
 
-{
-  "customerName": "Alice",
-  "question": "What are your working hours?"
-}
-```
+Update application.properties in both services with your MongoDB URI:
 
-### Unknown Question Test
-```json
-POST http://localhost:8080/api/ask
-Content-Type: application/json
+properties
+Copy code
+spring.data.mongodb.uri=mongodb://localhost:27017/human_in_ailoop_db
+Collections used (auto-created by MongoDB):
 
-{
-  "customerName": "John",
-  "question": "Do you offer pedicures?"
-}
-```
+HelpRequests → stores customer name, question, status, creation timestamp
 
-## Knowledge Base
-The service automatically initializes with:
-- Working hours: 9am - 7pm
-- Services: Haircut, Hair Coloring, Manicure
-- Prices: Haircut ($25), Hair Coloring ($50), Manicure ($20)
-- Contact: 123-456-7890
+KnowledgeBase → stores AI-learned questions and answers
+
+3. Run the Services
+Receptionist Service
+bash
+Copy code
+cd receptionist-service
+mvn spring-boot:run
+Supervisor Service
+bash
+Copy code
+cd supervisor-service
+mvn spring-boot:run
+4. Access the Interfaces
+Customer Interface: http://localhost:8080
+
+Supervisor Dashboard: http://localhost:8081
+
+5. Example Interactions
+Customer: "What are your working hours?"
+AI: "We are open from 9am to 7pm."
+
+Customer: "Do you offer pedicures?"
+AI: "Let me check with my supervisor and get back to you."
+
+Supervisor Responds: "Yes, we offer pedicures for $30."
+AI: "Yes, we offer pedicures for $30."
+
+Design Decisions
+Modular Microservices: Separate receptionist and supervisor services for scalability.
+
+Database: MongoDB Compass used to persist requests and knowledge base.
+
+Frontend: Thymeleaf chosen for simplicity and seamless integration with Spring Boot.
+
+Request Lifecycle: Ensures PENDING requests are tracked and updated automatically.
+
+Extensibility: Easy to add more AI capabilities or services in the future.
+
+Next Steps / Improvements
+Implement live call escalation when a supervisor is available.
+
+Enhance AI knowledge base with NLP capabilities.
+
+Add authentication for supervisor dashboard.
+
+Make the frontend more responsive and modern.
+
+Author
+Madhav Parmar
+Email: madhavparmar897@gmail.com
