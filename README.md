@@ -22,6 +22,12 @@ A Spring Boot 3 microservice for handling customer inquiries at Glamour Cuts sal
    mvn spring-boot:run
    ```
 
+3. **Voice Chat**
+   - Visit http://localhost:8080
+   - Enter your name
+   - Click "Start Voice Chat"
+   - Speak your questions and hear AI responses
+
 ## API Endpoints
 
 ### POST /api/ask
@@ -53,6 +59,36 @@ Ask a question to the AI receptionist.
 Get answer directly from knowledge base.
 
 **Example:** `GET /api/knowledge/working hours`
+
+### POST /api/voice/token
+Get LiveKit access token for voice session.
+
+**Request:**
+```json
+{
+  "customerName": "Alice"
+}
+```
+
+**Response:**
+```json
+{
+  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "wsUrl": "ws://localhost:7880",
+  "roomName": "voice-session-1234567890"
+}
+```
+
+### POST /api/voice/process-speech
+Process speech transcript and get AI response.
+
+**Request:**
+```json
+{
+  "customerName": "Alice",
+  "transcript": "What are your working hours?"
+}
+```
 
 ## Postman Test Examples
 

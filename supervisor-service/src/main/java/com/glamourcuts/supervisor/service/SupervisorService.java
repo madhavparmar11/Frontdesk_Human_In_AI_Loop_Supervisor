@@ -16,10 +16,12 @@ public class SupervisorService {
     
     private final HelpRequestRepository helpRequestRepository;
     private final KnowledgeBaseRepository knowledgeBaseRepository;
+    private final EmailService emailService;
     
-    public SupervisorService(HelpRequestRepository helpRequestRepository, KnowledgeBaseRepository knowledgeBaseRepository) {
+    public SupervisorService(HelpRequestRepository helpRequestRepository, KnowledgeBaseRepository knowledgeBaseRepository, EmailService emailService) {
         this.helpRequestRepository = helpRequestRepository;
         this.knowledgeBaseRepository = knowledgeBaseRepository;
+        this.emailService = emailService;
     }
     
     public List<HelpRequest> getPendingRequests() {
@@ -39,18 +41,33 @@ public class SupervisorService {
         
         HelpRequest helpRequest = helpRequestOpt.get();
         
-        // Update help request status
+        // Update help request with manager response
         helpRequest.setStatus("RESOLVED");
+        helpRequest.setManagerResponse(resolveRequest.getAnswer());
+        helpRequest.setResolvedAt(java.time.LocalDateTime.now());
         helpRequestRepository.save(helpRequest);
         
-        // Add to knowledge base
+        // Add to knowledge base for keyword matching
         KnowledgeBase knowledge = new KnowledgeBase();
         knowledge.setQuestion(helpRequest.getQuestion());
         knowledge.setAnswer(resolveRequest.getAnswer());
         knowledgeBaseRepository.save(knowledge);
         
-        // Simulate notification to AI Receptionist
-        System.out.println("Customer " + helpRequest.getCustomerName() + ": " + resolveRequest.getAnswer());
+        // Send email notification to customer
+        System.out.println("Customer email: " + helpRequest.getCustomerEmail());
+        if (helpRequest.getCustomerEmail() != null && !helpRequest.getCustomerEmail().isEmpty()) {
+            System.out.println("Sending email notification to: " + helpRequest.getCustomerEmail());
+            emailService.sendQueryResolvedEmail(
+                helpRequest.getCustomerEmail(),
+                helpRequest.getCustomerName(),
+                helpRequest.getQuestion(),
+                resolveRequest.getAnswer()
+            );
+        } else {
+            System.out.println("No email provided for customer: " + helpRequest.getCustomerName());
+        }
+        
+        System.out.println("Query resolved and customer notified: " + helpRequest.getCustomerName());
         
         return true;
     }

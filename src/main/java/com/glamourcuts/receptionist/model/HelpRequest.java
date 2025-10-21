@@ -12,9 +12,12 @@ public class HelpRequest {
     private Long id;
     
     private String customerName;
+    private String customerEmail;
     private String question;
+    private String managerResponse;
     private String status = "PENDING";
     private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime resolvedAt;
     
     public HelpRequest() {
         this.id = new Random().nextLong(1000000000L) + 1L; // 1-10 digit number
@@ -26,6 +29,9 @@ public class HelpRequest {
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     
+    public String getCustomerEmail() { return customerEmail; }
+    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    
     public String getQuestion() { return question; }
     public void setQuestion(String question) { this.question = question; }
     
@@ -34,4 +40,10 @@ public class HelpRequest {
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
+    public String getManagerResponse() { return managerResponse; }
+    public void setManagerResponse(String managerResponse) { this.managerResponse = managerResponse; }
+    
+    public LocalDateTime getResolvedAt() { return resolvedAt; }
+    public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
 }

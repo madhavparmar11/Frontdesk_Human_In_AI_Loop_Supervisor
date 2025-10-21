@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Glamour Cuts - AI Receptionist</title>
+    <script src="https://unpkg.com/livekit-client@1.15.13/dist/livekit-client.umd.js"></script>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -137,6 +138,109 @@
         .contact-value {
             color: #666;
         }
+        .voice-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+        }
+        .voice-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .record-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        .record-btn:hover {
+            background-color: #c82333;
+        }
+        .record-btn.recording {
+            background-color: #28a745;
+        }
+        .play-btn {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .play-btn:hover {
+            background-color: #138496;
+        }
+        .voice-status {
+            font-size: 14px;
+            color: #666;
+            margin-left: 10px;
+        }
+        .audio-wave {
+            display: none;
+            width: 100px;
+            height: 20px;
+            background: linear-gradient(90deg, #007bff 0%, #007bff 50%, transparent 50%);
+            background-size: 20px 100%;
+            animation: wave 1s infinite;
+        }
+        @keyframes wave {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 0; }
+        }
+        .email-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .email-modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .email-modal h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .email-modal p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .email-modal input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .email-modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .email-modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .submit-email {
+            background-color: #007bff;
+            color: white;
+        }
+        .skip-email {
+            background-color: #6c757d;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -159,6 +263,13 @@
                 </div>
                 
                 <button type="submit" class="btn">Ask Question</button>
+                
+                <div class="voice-controls">
+                    <button type="button" class="voice-btn record-btn" id="connectBtn">🎤 Start Voice Chat</button>
+                    <button type="button" class="voice-btn play-btn" id="disconnectBtn" style="display:none;">❌ End Chat</button>
+                    <div class="audio-wave" id="audioWave"></div>
+                    <span class="voice-status" id="voiceStatus">Click to start voice conversation</span>
+                </div>
             </form>
             
             <div th:if="${answer}" class="response" style="margin-top: 20px;">
@@ -201,5 +312,445 @@
             </div>
         </div>
     </div>
+    
+    <!-- Email Modal -->
+    <div id="emailModal" class="email-modal">
+        <div class="email-modal-content">
+            <h3>📧 Get Notified</h3>
+            <p>We'll check with our supervisor and email you the answer!</p>
+            <input type="email" id="customerEmailInput" placeholder="Enter your email address" required>
+            <div class="email-modal-buttons">
+                <button class="submit-email" onclick="submitWithEmail()">Submit</button>
+                <button class="skip-email" onclick="skipEmail()">Skip</button>
+            </div>
+        </div>
+    </div>
 </body>
+
+<script>
+let room;
+let isConnected = false;
+let audioContext;
+let speechRecognition;
+let currentTranscript = '';
+
+const connectBtn = document.getElementById('connectBtn');
+const disconnectBtn = document.getElementById('disconnectBtn');
+const voiceStatus = document.getElementById('voiceStatus');
+const audioWave = document.getElementById('audioWave');
+const questionTextarea = document.getElementById('question');
+const customerNameInput = document.getElementById('customerName');
+
+// Initialize Web Speech API for STT
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRecognition) {
+    speechRecognition = new SpeechRecognition();
+    speechRecognition.continuous = true;
+    speechRecognition.interimResults = true;
+    speechRecognition.lang = 'en-US';
+    
+    speechRecognition.onresult = async (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+            }
+        }
+        
+        if (finalTranscript && finalTranscript !== currentTranscript) {
+            currentTranscript = finalTranscript;
+            questionTextarea.value = finalTranscript;
+            voiceStatus.textContent = 'Processing: "' + finalTranscript + '"';
+            
+            // Send to AI and get response
+            await processVoiceInput(finalTranscript);
+            
+            // Reset for next input
+            setTimeout(() => {
+                if (isConnected && speechRecognition) {
+                    speechRecognition.start();
+                }
+            }, 2000);
+        }
+    };
+    
+    speechRecognition.onend = () => {
+        if (isConnected) {
+            setTimeout(() => {
+                if (speechRecognition && !speechRecognition.recognizing) {
+                    speechRecognition.start();
+                }
+            }, 1000);
+        }
+    };
+    
+    speechRecognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        voiceStatus.textContent = 'Voice error: ' + event.error;
+    };
+}
+
+// Connect to voice session
+connectBtn.addEventListener('click', async () => {
+    const customerName = customerNameInput.value.trim();
+    if (!customerName) {
+        alert('Please enter your name first');
+        return;
+    }
+    
+    if (typeof LiveKit === 'undefined') {
+        voiceStatus.textContent = 'Using browser voice mode...';
+        startBrowserVoiceMode(customerName);
+        return;
+    }
+    
+    try {
+        voiceStatus.textContent = 'Starting voice chat...';
+        
+        // Get LiveKit token
+        const tokenResponse = await fetch('/api/voice/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ customerName })
+        });
+        
+        const { token, wsUrl, roomName } = await tokenResponse.json();
+        
+        // Connect to LiveKit room following official docs
+        room = new LiveKit.Room({
+            adaptiveStream: true,
+            dynacast: true,
+        });
+        
+        // Handle connection events
+        room.on(LiveKit.RoomEvent.Connected, async () => {
+            console.log('Connected to LiveKit room:', room.name);
+            voiceStatus.textContent = 'Connected! Start speaking...';
+            audioWave.style.display = 'block';
+            connectBtn.style.display = 'none';
+            disconnectBtn.style.display = 'inline-block';
+            isConnected = true;
+            
+            // Enable microphone only
+            await room.localParticipant.enableCameraAndMicrophone(false, true);
+            
+            // Start speech recognition
+            if (speechRecognition) {
+                speechRecognition.start();
+            }
+        });
+        
+        // Handle incoming audio tracks
+        room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+            if (track.kind === LiveKit.Track.Kind.Audio) {
+                console.log('Audio track received from:', participant.identity);
+                const audioElement = track.attach();
+                document.body.appendChild(audioElement);
+                audioElement.play();
+            }
+        });
+        
+        // Handle participant events
+        room.on(LiveKit.RoomEvent.ParticipantConnected, (participant) => {
+            console.log('Participant connected:', participant.identity);
+        });
+        
+        // Handle disconnection
+        room.on(LiveKit.RoomEvent.Disconnected, (reason) => {
+            console.log('Disconnected from room:', reason);
+            voiceStatus.textContent = 'Voice chat ended';
+            audioWave.style.display = 'none';
+            connectBtn.style.display = 'inline-block';
+            disconnectBtn.style.display = 'none';
+            isConnected = false;
+        });
+        
+        // Handle reconnection
+        room.on(LiveKit.RoomEvent.Reconnecting, () => {
+            voiceStatus.textContent = 'Reconnecting...';
+        });
+        
+        room.on(LiveKit.RoomEvent.Reconnected, () => {
+            voiceStatus.textContent = 'Reconnected! Continue speaking...';
+        });
+        
+        // Connect to room
+        await room.connect(wsUrl, token);
+        console.log('Room connection initiated');
+        
+    } catch (error) {
+        console.error('Connection error:', error);
+        voiceStatus.textContent = 'Connection failed: ' + error.message;
+    }
+});
+
+// Disconnect from voice session
+disconnectBtn.addEventListener('click', () => {
+    if (room) {
+        room.disconnect();
+    }
+    if (speechRecognition) {
+        speechRecognition.stop();
+    }
+    
+    // Reset UI
+    voiceStatus.textContent = 'Voice chat ended';
+    audioWave.style.display = 'none';
+    connectBtn.style.display = 'inline-block';
+    disconnectBtn.style.display = 'none';
+    isConnected = false;
+});
+
+// Set up real-time audio streaming with voice activity detection
+function setupAudioStreaming() {
+    const localAudioTrack = room.localParticipant.audioTracks.values().next().value?.track;
+    if (!localAudioTrack) return;
+    
+    // Voice activity detection
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(localAudioTrack.mediaStream);
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    let isSpeaking = false;
+    let speechBuffer = [];
+    
+    function detectVoiceActivity() {
+        analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+        
+        if (average > 30 && !isSpeaking) {
+            isSpeaking = true;
+            voiceStatus.textContent = 'Listening...';
+            speechBuffer = [];
+        } else if (average < 20 && isSpeaking) {
+            isSpeaking = false;
+            if (speechBuffer.length > 0) {
+                processAudioBuffer(speechBuffer);
+            }
+        }
+        
+        if (isSpeaking) {
+            speechBuffer.push(dataArray.slice());
+        }
+        
+        requestAnimationFrame(detectVoiceActivity);
+    }
+    
+    detectVoiceActivity();
+}
+
+// Process audio buffer and convert to text
+async function processAudioBuffer(audioBuffer) {
+    try {
+        // Use Web Speech API for STT (in production, use LiveKit's STT)
+        if (speechRecognition && !speechRecognition.recognizing) {
+            speechRecognition.start();
+        }
+    } catch (error) {
+        console.error('Audio processing error:', error);
+    }
+}
+
+// Process voice input and stream AI response
+async function processVoiceInput(transcript) {
+    try {
+        const response = await fetch('/api/voice/process-speech', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customerName: customerNameInput.value,
+                transcript: transcript
+            })
+        });
+        
+        const { answer } = await response.json();
+        
+        // Check if it's an unknown question
+        if (answer.includes('Let me check with my supervisor')) {
+            // Store current question for email submission
+            window.currentQuestion = transcript;
+            // Show email modal
+            document.getElementById('emailModal').style.display = 'block';
+            return;
+        }
+        
+        // Update UI for known answers
+        const responseDiv = document.querySelector('.response') || createResponseDiv();
+        responseDiv.querySelector('.question').textContent = 'Q: ' + transcript;
+        responseDiv.querySelector('.answer').textContent = 'A: ' + answer;
+        responseDiv.style.display = 'block';
+        
+        // Stream AI response as audio through LiveKit
+        await streamAIResponse(answer);
+        
+        voiceStatus.textContent = 'AI responded. Continue speaking...';
+        
+    } catch (error) {
+        console.error('Processing error:', error);
+        voiceStatus.textContent = 'Processing error: ' + error.message;
+    }
+}
+
+// Submit question with email
+async function submitWithEmail() {
+    const email = document.getElementById('customerEmailInput').value;
+    if (!email) {
+        alert('Please enter your email address');
+        return;
+    }
+    
+    try {
+        await fetch('/api/voice/process-speech', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customerName: customerNameInput.value,
+                customerEmail: email,
+                transcript: window.currentQuestion
+            })
+        });
+        
+        // Update UI
+        const responseDiv = document.querySelector('.response') || createResponseDiv();
+        responseDiv.querySelector('.question').textContent = 'Q: ' + window.currentQuestion;
+        responseDiv.querySelector('.answer').textContent = 'A: Thank you! We\'ll email you the answer at ' + email;
+        responseDiv.style.display = 'block';
+        
+        // Close modal
+        document.getElementById('emailModal').style.display = 'none';
+        document.getElementById('customerEmailInput').value = '';
+        
+    } catch (error) {
+        console.error('Error submitting with email:', error);
+    }
+}
+
+// Skip email and show default message
+function skipEmail() {
+    const responseDiv = document.querySelector('.response') || createResponseDiv();
+    responseDiv.querySelector('.question').textContent = 'Q: ' + window.currentQuestion;
+    responseDiv.querySelector('.answer').textContent = 'A: Let me check with my supervisor and get back to you.';
+    responseDiv.style.display = 'block';
+    
+    // Close modal
+    document.getElementById('emailModal').style.display = 'none';
+    document.getElementById('customerEmailInput').value = '';
+}
+
+// Stream AI response as audio through LiveKit
+async function streamAIResponse(text) {
+    if (room && room.localParticipant && typeof LiveKit !== 'undefined') {
+        try {
+            // Create audio context for TTS
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const destination = audioContext.createMediaStreamDestination();
+            
+            // Generate TTS audio
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9;
+            utterance.pitch = 1.1;
+            
+            // Create and publish LiveKit audio track
+            const mediaStream = destination.stream;
+            const audioTrack = await LiveKit.createLocalAudioTrack({
+                source: LiveKit.Track.Source.Microphone,
+                stream: mediaStream
+            });
+            
+            await room.localParticipant.publishTrack(audioTrack, {
+                name: 'ai-response',
+                source: LiveKit.Track.Source.Microphone
+            });
+            
+            // Speak through LiveKit
+            speechSynthesis.speak(utterance);
+            
+            // Unpublish after speaking
+            utterance.onend = async () => {
+                await room.localParticipant.unpublishTrack(audioTrack);
+            };
+            
+        } catch (error) {
+            console.error('LiveKit audio streaming error:', error);
+            speakAnswer(text); // Fallback
+        }
+    } else {
+        speakAnswer(text); // Fallback to browser TTS
+    }
+}
+
+// Create response div if it doesn't exist
+function createResponseDiv() {
+    const responseDiv = document.createElement('div');
+    responseDiv.className = 'response';
+    responseDiv.style.marginTop = '20px';
+    responseDiv.innerHTML = `
+        <h3>AI Response</h3>
+        <div class="question"></div>
+        <div class="answer"></div>
+    `;
+    document.querySelector('.section').appendChild(responseDiv);
+    return responseDiv;
+}
+
+// Text-to-speech for AI responses
+function speakAnswer(text) {
+    if ('speechSynthesis' in window) {
+        // Stop any ongoing speech
+        speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        utterance.volume = 0.8;
+        
+        // Use a pleasant voice
+        const voices = speechSynthesis.getVoices();
+        const preferredVoice = voices.find(voice => 
+            voice.name.includes('Zira') || 
+            voice.name.includes('Hazel') ||
+            (voice.lang.startsWith('en') && voice.name.includes('Female'))
+        );
+        if (preferredVoice) {
+            utterance.voice = preferredVoice;
+        }
+        
+        speechSynthesis.speak(utterance);
+    }
+}
+
+// Load voices when available
+if ('speechSynthesis' in window) {
+    speechSynthesis.onvoiceschanged = () => {
+        speechSynthesis.getVoices();
+    };
+}
+
+// Browser-only voice mode fallback
+function startBrowserVoiceMode(customerName) {
+    voiceStatus.textContent = 'Browser voice mode active. Start speaking...';
+    audioWave.style.display = 'block';
+    connectBtn.style.display = 'none';
+    disconnectBtn.style.display = 'inline-block';
+    isConnected = true;
+    
+    if (speechRecognition) {
+        speechRecognition.start();
+    }
+}
+
+// Check if LiveKit loaded
+window.addEventListener('load', () => {
+    if (typeof LiveKit === 'undefined') {
+        console.warn('LiveKit SDK not available - browser mode will be used');
+        voiceStatus.textContent = 'Click to start voice conversation';
+    } else {
+        console.log('LiveKit SDK loaded successfully');
+    }
+});
+</script>
+
 </html>

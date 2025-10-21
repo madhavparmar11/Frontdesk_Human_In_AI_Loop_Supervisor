@@ -7,3 +7,4 @@ com\glamourcuts\supervisor\model\KnowledgeBase.class
 com\glamourcuts\supervisor\repository\KnowledgeBaseRepository.class
 com\glamourcuts\supervisor\service\SupervisorService.class
 com\glamourcuts\supervisor\dto\ResolveRequest.class
+com\glamourcuts\supervisor\service\EmailService.class
