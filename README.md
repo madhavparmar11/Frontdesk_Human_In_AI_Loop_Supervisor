@@ -1,149 +1,210 @@
-# Human-in-the-Loop AI Supervisor
+# AI Voice Receptionist with Learning System 🎤🧠
 
-**Project Type:** AI Receptionist System  
-**Tech Stack:** Java, Spring Boot 3, Thymeleaf, MongoDB (Compass), Maven
+**Project Type:** AI Receptionist System with Real-time Voice Chat  
+**Tech Stack:** Java, Spring Boot 3, LiveKit, MongoDB, Thymeleaf, Maven
 
-## Overview
-This project implements a human-in-the-loop AI receptionist system for a salon called “Glamour Cuts”.
+## 🌟 Overview
+This project implements a complete AI voice receptionist system for "Glamour Cuts" salon with human-in-the-loop learning capabilities.
 
-The AI agent:
+### 🎯 Key Features
+- 🎤 **Real-time Voice Chat** - LiveKit integration for natural conversation
+- 🧠 **AI Learning System** - Learns from supervisor responses (40+ pre-programmed answers)
+- 📧 **Email Notifications** - Customers get notified when queries are resolved
+- 👨💼 **Supervisor Dashboard** - Manage and resolve customer queries
+- 🔄 **Automatic Knowledge Updates** - AI remembers new answers for future customers
 
-- Answers customer questions about services, prices, and working hours.
-- Escalates questions it cannot answer to a human supervisor.
-- Updates its internal knowledge base automatically after supervisor input.
+## 🏗️ System Architecture
 
-The system includes:
+- **Receptionist Service** (Port 8080) – AI voice interactions with customers
+- **Supervisor Service** (Port 8081) – Management dashboard for pending queries
+- **MongoDB Database** – Stores help requests and learned knowledge
+- **LiveKit Cloud** – Real-time voice streaming infrastructure
+- **Email Service** – Customer notifications via SMTP
 
-- **Receptionist Service** – Handles AI interactions with customers.
-- **Supervisor Service** – Web dashboard for managing pending help requests.
-- **MongoDB Database (Compass)** – Stores help requests and learned answers.
-- **Thymeleaf Frontend** – Two simple interfaces:
-  - Customer interface: Ask questions and view AI responses.
-  - Supervisor dashboard: View, resolve, and track help requests.
-- **LiveKit Voice Chat** – Real-time voice conversation with AI receptionist.
+## 🚀 Quick Start
 
-## Voice Chat Features
+### 1. Prerequisites
+- Java 17+
+- Maven 3.6+
+- MongoDB (local or cloud)
+- LiveKit Cloud account (optional)
 
-3. **Voice Chat**
-   - Visit http://localhost:8080
-   - Enter your name
-   - Click "Start Voice Chat"
-   - Speak your questions and hear AI responses
-
-## API Endpoints
-
-## Features
-
-- Modular, scalable AI agent system
-- Request lifecycle management: `PENDING → RESOLVED / UNRESOLVED`
-- Supervisor responses linked to originating requests
-- Automatic knowledge base updates
-- Simple, professional interfaces built with Thymeleaf
-
-## Setup Instructions
-
-### 1. Clone the Repository
+### 2. Clone Repository
 ```bash
-git clone https://github.com/madhavparmar/Frontdesk_Human_In_AI_Loop_Supervisor.git
+git clone https://github.com/madhavparmar11/Frontdesk_Human_In_AI_Loop_Supervisor.git
 cd Frontdesk_Human_In_AI_Loop_Supervisor
-2. Configure MongoDB
-Open MongoDB Compass
 
-Connect to your local MongoDB:
 
-Hostname: localhost
+Copy
+3. Configure MongoDB
+Update application.properties in both services:
 
-### POST /api/voice/token
-Get LiveKit access token for voice session.
-
-**Request:**
-```json
-{
-  "customerName": "Alice"
-}
-```
-
-**Response:**
-```json
-{
-  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "wsUrl": "wss://humaninailoop-m0tqanko.livekit.cloud",
-  "roomName": "voice-session-1234567890"
-}
-```
-
-### POST /api/voice/process-speech
-Process speech transcript and get AI response.
-
-**Request:**
-```json
-{
-  "customerName": "Alice",
-  "transcript": "What are your working hours?"
-}
-```
-
-Port: 27017
-
-Create a database named: human_in_ailoop_db
-
-Update application.properties in both services with your MongoDB URI:
-
-properties
-Copy code
 spring.data.mongodb.uri=mongodb://localhost:27017/human_in_ailoop_db
-Collections used (auto-created by MongoDB):
 
-HelpRequests → stores customer name, question, status, creation timestamp
+Copy
+properties
+4. Run Services
+Terminal 1 - Receptionist Service:
 
-KnowledgeBase → stores AI-learned questions and answers
-
-3. Run the Services
-Receptionist Service
-bash
-Copy code
-cd receptionist-service
 mvn spring-boot:run
-Supervisor Service
+
+Copy
 bash
-Copy code
+Terminal 2 - Supervisor Service:
+
 cd supervisor-service
 mvn spring-boot:run
-4. Access the Interfaces
+
+Copy
+bash
+5. Access Applications
 Customer Interface: http://localhost:8080
 
 Supervisor Dashboard: http://localhost:8081
 
-5. Example Interactions
-Customer: "What are your working hours?"
-AI: "We are open from 9am to 7pm."
+🎤 Voice Chat Usage
+Visit http://localhost:8080
 
-Customer: "Do you offer pedicures?"
-AI: "Let me check with my supervisor and get back to you."
+Enter your name
 
-Supervisor Responds: "Yes, we offer pedicures for $30."
-AI: "Yes, we offer pedicures for $30."
+Click "🎤 Start Voice Chat"
 
-Design Decisions
-Modular Microservices: Separate receptionist and supervisor services for scalability.
+Speak your questions naturally
 
-Database: MongoDB Compass used to persist requests and knowledge base.
+Hear AI responses in real-time
 
-Frontend: Thymeleaf chosen for simplicity and seamless integration with Spring Boot.
+🧠 AI Learning Process
+Customer asks unknown question → AI says "Let me check with my supervisor"
 
-Request Lifecycle: Ensures PENDING requests are tracked and updated automatically.
+Email modal appears → Customer provides email for notification
 
-Extensibility: Easy to add more AI capabilities or services in the future.
+Question goes to supervisor → Visible on dashboard (port 8081)
 
-Next Steps / Improvements
-Implement live call escalation when a supervisor is available.
+Supervisor provides answer → Customer gets email notification
 
-Enhance AI knowledge base with NLP capabilities.
+AI learns → Next customer asking same question gets instant answer
 
-Add authentication for supervisor dashboard.
+📧 Email Configuration
+Configure email in supervisor-service/application.properties:
 
-Make the frontend more responsive and modern.
+Yahoo Mail (Recommended):
 
-Author
+spring.mail.host=smtp.mail.yahoo.com
+spring.mail.port=587
+spring.mail.username=your-email@yahoo.com
+spring.mail.password=your-app-password
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+Copy
+properties
+Outlook:
+
+spring.mail.host=smtp-mail.outlook.com
+spring.mail.port=587
+spring.mail.username=your-email@outlook.com
+spring.mail.password=your-password
+
+Copy
+properties
+🎯 Pre-programmed Knowledge Base
+The AI knows about:
+
+Services: Haircut ($25), Hair Coloring ($50), Manicure ($20), Pedicure ($30)
+
+Hours: 9am - 7pm (Monday-Saturday), Closed Sundays
+
+Contact: 123-456-7890
+
+Location: 123 Beauty Street, Downtown
+
+Appointments, Parking, Discounts, Gift Cards, and more...
+
+🔧 API Endpoints
+Voice Chat APIs
+POST /api/voice/token
+Content-Type: application/json
+
+{
+  "customerName": "Alice"
+}
+
+Copy
+http
+POST /api/voice/process-speech
+Content-Type: application/json
+
+{
+  "customerName": "Alice",
+  "customerEmail": "alice@email.com",
+  "transcript": "What are your working hours?"
+}
+
+Copy
+http
+Knowledge Base API
+GET /api/knowledge/{question}
+
+Copy
+http
+🛠️ Technology Stack
+Backend: Spring Boot 3.2.0, Java 17+
+
+Database: MongoDB with Spring Data
+
+Frontend: Thymeleaf, HTML5, CSS3, JavaScript
+
+Voice: LiveKit Cloud, Web Speech API
+
+Email: Spring Mail with SMTP
+
+Build: Maven
+
+Architecture: Microservices
+
+📱 Features Showcase
+Voice Interaction
+Real-time speech-to-text
+
+Natural language processing
+
+Text-to-speech responses
+
+Continuous conversation
+
+Learning System
+Unknown question detection
+
+Email collection modal
+
+Supervisor resolution workflow
+
+Automatic knowledge updates
+
+Management Dashboard
+Pending queries view
+
+One-click resolution
+
+Customer email notifications
+
+Request history tracking
+
+🔮 Future Enhancements
+ Multi-language support
+ Voice activity detection
+ Advanced NLP integration
+ Mobile app development
+ Analytics dashboard
+ Integration with booking systems
+👨‍💻 Author
 Madhav Parmar
-Email: madhavparmar897@gmail.com
+📧 Email: mailto:madhavparmar897@gmail.com
+🔗 GitHub: @madhavparmar11
+
+📄 License
+This project is open source and available under the MIT License.
+
+⭐ Star this repository if you found it helpful!
+
+🎤 Experience the future of AI customer service with voice interaction and continuous learning!
